@@ -12,8 +12,6 @@
 #include <string.h>
 #include <math.h>
 
-#define PI 3.141592
-
 
 typedef struct Mesh
 {

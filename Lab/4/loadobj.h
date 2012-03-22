@@ -7,6 +7,8 @@
 	#include <GL/gl.h>
 #endif
 
+#define PI 3.141592
+
 typedef struct
 {
   GLfloat* vertexArray;
