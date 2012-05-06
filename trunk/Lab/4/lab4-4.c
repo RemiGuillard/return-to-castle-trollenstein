@@ -21,17 +21,40 @@
 int height;
 int width;
 
+//Terrain size
+int tLength;
+int tWidth;
+
 //Angle pos
 float angh;
 float angv;
 
 // Angle & pos matrix
-GLfloat position[] =	{ 0.0f, 10.0f, 20.0f };
-GLfloat look[] =	{ 15.0f, 0.0f, 0.0f };
+GLfloat position[] =	{ 0.0f, 2.0f, 0.0f };
+GLfloat look[] =	{ 10.0f, 2.0f, 10.0f };
 
 // Are we flying or not ?!
-int flying = 1;
+int flying = 0;
 
+// Object Model
+Model *gsph;
+
+// Texture
+GLuint sphTex;
+
+// Sphere coord obj
+typedef struct
+{
+  float posx;
+  float posy;
+  float posz;
+  
+} sphCoord;
+
+// sphCoord
+sphCoord gsphC;
+
+// Distance Matrix
 #define near 0.2
 #define far 500.0
 #define right 0.1
@@ -402,6 +425,7 @@ Model* GenerateTerrain(TextureData *tex,
 // vertex array object
 Model *m, *m2, *tm;
 // Reference to shader program
+GLuint progsph;
 GLuint program;
 GLuint tex1, tex2;
 TextureData ttex; // terrain
@@ -431,15 +455,42 @@ void init(void)
 	LoadTGATexture("ok2.tga", &ttex);
 	tm = GenerateTerrain(&ttex, program, "inPosition", "inNormal", "inTexCoord");
 	printError("init terrain");
+
+	tWidth = ttex.width;
+	
+	// Load sphere
+	progsph = loadShaders("lab4.vert", "lab4.frag");
+	glUseProgram(progsph);
+	gsph = LoadModelPlus("octagon.obj", progsph, "inPos", "inNorm", "inTex");
+	glUniformMatrix4fv(glGetUniformLocation(progsph, "projMatrix"), 1, GL_TRUE, projectionMatrix);
+	gsphC.posx = 1.0f;
+	gsphC.posy = 0.0f;
+	gsphC.posz = 1.0f;
+	printError("Initialisation groundSphere");
+}
+
+float	getPosYOnMap(float x, float z, Model* tm) {
+
+  float Ypos;
+
+  Ypos = tm->vertexArray[((int)x + (int)z * tWidth)*3 + 1];
+  
+  return Ypos;
 }
 
 void display(void)
 {
-	// clear the screen
+    float t = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+  // clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	GLfloat total[16], modelView[16], camMatrix[16];
+	GLfloat sphMatrix[16];
 	moveThePlayer();
+
+	IdentityMatrix(sphMatrix);
+	
 	
 	printError("pre display");
 	
@@ -457,6 +508,17 @@ void display(void)
 	glBindTexture(GL_TEXTURE_2D, tex1);		// Bind Our Texture tex1
 	DrawModel(tm);
 
+	// Load groundsphere
+	glUseProgram(progsph);
+	gsphC.posx += t / 1000.0;
+	gsphC.posz += t / 1000.0;
+	sphMatrix[3] = gsphC.posx;
+	sphMatrix[11] = gsphC.posz;
+	sphMatrix[7] = getPosYOnMap(gsphC.posx, gsphC.posz, tm);
+	Mult(camMatrix, sphMatrix, total);
+	glUniformMatrix4fv(glGetUniformLocation(progsph, "mdlMatrix"), 1, GL_TRUE, total);
+	DrawModel(gsph);
+	
 	printError("display 2");
 	
 	glutSwapBuffers();
