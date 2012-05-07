@@ -18,10 +18,13 @@ int tWidth;
 float angh;
 float angv;
 
-// Angle & pos matrix
-GLfloat position[] =	{ 0.0f, 2.0f, 0.0f };
-GLfloat look[] =	{ 10.0f, 2.0f, 10.0f };
+//MAP DATA
+mapData *map;
 
+// Angle & pos matrix
+GLfloat position[] =	{ 0.0f, 0.5f, 0.0f };
+GLfloat look[] =	{ 10.0f, 0.5f, 10.0f };
+float move = 0.02;
 // Are we flying or not ?!
 int flying = 0;
 
@@ -33,7 +36,7 @@ GLuint sphTex;
 
 // Sphere coord obj
 // Distance Matrix
-#define near 0.2
+#define near 0.1
 #define far 500.0
 #define right 0.1
 #define left -0.1
@@ -98,6 +101,19 @@ void rotationVectX(float angle, GLfloat *A, GLfloat *B) {
   B[2] = yprim + A[2];
 }
 
+void setPlayerAtStart() {
+  int x, z;
+  
+  for (x = 0; x < map->width-1; x++)
+	for (z = 0; z < map->height-1; z++)
+	  if (map->map[z][x] == START) {
+		position[0] = x + 0.5;
+		position[2] = z + 0.5;
+		look[0] = x + 0.5;
+		look[2] = z + 2.5;
+	  }
+		
+}
 
 void moveThePlayer() {
 
@@ -106,85 +122,115 @@ void moveThePlayer() {
 
   Point3D AB;
 
+  GLfloat oldPos[] = { position[0], position[1], position[2] };
+  GLfloat oldDir[] = { look[0], look[1], look[2] };
+  
   if (keyIsDown(27))
     exit(EXIT_SUCCESS);
 
   if (keyIsDown('p')) {
 	if (flying == 1) {
-	  look[1] = -position[1];
-	  position[1] = 2.0f;
+	  look[1] -= position[1];
+	  position[1] = 0.5f;
 	  flying = 0;
-	} else
-	  flying = 1;
+	}
   }
-  
-  if (keyIsDown('w') || keyIsDown('z')) { //UP
+
+  if (keyIsDown('o'))
+	  flying = 1;
+  if (keyIsDown('z')) { //UP
     SetVector(look[0] - position[0], look[1] - position[1], look[2] - position[2], &AB);
-    look[0] += 0.04 * AB.x;
-    look[2] += 0.04 * AB.z;
-    position[0] += 0.04 * AB.x;
-    position[2] += 0.04 * AB.z;
+    look[0] += move * AB.x;
+    look[2] += move * AB.z;
+    position[0] += move * AB.x;
+    position[2] += move * AB.z;
 	if (flying == 1) {
-	  look[1] += 0.04 * AB.y;
-	  position[1] += 0.04 * AB.y;
+	  look[1] += move * AB.y;
+	  position[1] += move * AB.y;
 	}
   }
   if (keyIsDown('s')) { //DOWN
     SetVector(look[0] - position[0], look[1] - position[1], look[2] - position[2], &AB);
-    look[0] -= 0.04 * AB.x;
-    look[2] -= 0.04 * AB.z;
-    position[0] -= 0.04 * AB.x;
-    position[2] -= 0.04 * AB.z;
+    look[0] -= move * AB.x;
+    look[2] -= move * AB.z;
+    position[0] -= move * AB.x;
+    position[2] -= move * AB.z;
 	if (flying == 1) {
-	  look[1] -= 0.04 * AB.y;
-	  position[1] -= 0.04 * AB.y;
+	  look[1] -= move * AB.y;
+	  position[1] -= move * AB.y;
 	}
   }
   if (keyIsDown('d')) { //RIGHT
     rotationVectY(90, orig, dir);
     SetVector(dir[0] - orig[0], dir[1] - orig[1], dir[2] - orig[2], &AB);
-    look[0] += 0.04 * AB.x;
-    look[2] += 0.04 * AB.z;
-    position[0] += 0.04 * AB.x;
-    position[2] += 0.04 * AB.z;
+    look[0] += move * AB.x;
+    look[2] += move * AB.z;
+    position[0] += move * AB.x;
+    position[2] += move * AB.z;
 	if (flying == 1) {
-	  look[1] += 0.04 * AB.y;
-	  position[1] += 0.04 * AB.y;
+	  look[1] += move * AB.y;
+	  position[1] += move * AB.y;
 	}
   }
-  if (keyIsDown('a') || keyIsDown('q')) { //LEFT
+  if (keyIsDown('q')) { //LEFT
     rotationVectY(90, orig, dir);
     SetVector(dir[0] - orig[0], dir[1] - orig[1], dir[2] - orig[2], &AB);
-    look[0] -= 0.04 * AB.x;
-    look[2] -= 0.04 * AB.z;
-    position[0] -= 0.04 * AB.x;
-    position[2] -= 0.04 * AB.z;
+    look[0] -= move * AB.x;
+    look[2] -= move * AB.z;
+    position[0] -= move * AB.x;
+    position[2] -= move * AB.z;
 	if (flying == 1) {
-	  look[1] -= 0.04 * AB.y;
-	  position[1] -= 0.04 * AB.y;
+	  look[1] -= move * AB.y;
+	  position[1] -= move * AB.y;
 	}
   }
-}
+  if (keyIsDown('a')) { // Move camera left
+	rotationVectY(-ANGMOV, position, look);
+	angh -= ANGMOV;
+	angh = fmodf(angh, 360.0);
+  }
+  if (keyIsDown('e')) { // Move camera right
+	rotationVectY(ANGMOV, position, look);
+	angh += ANGMOV;
+	angh = fmodf(angh, 360.0);
+  }
+  if (keyIsDown('g')) { // Move camera down
+	if (angv - ANGMOV > -179.0) {
+	  if (look[2] > position[2])
+		rotationVectX(-ANGMOV, position, look);
+	  else
+		rotationVectX(ANGMOV, position, look);
+	  angv -= ANGMOV;
+	}
+  }
+  if (keyIsDown('t')) { // move camera up
+	if (angv + ANGMOV < 179.0) {
+	  if (look[2] > position[2])
+		rotationVectX(ANGMOV, position, look);
+	  else
+		rotationVectX(-ANGMOV, position, look);
+	  angv += ANGMOV;
+	}
+  }
+  if (keyIsDown('r')) { // restart the level (player at start)
+	setPlayerAtStart();
+  }
 
-void mouseMove(int x, int y) {
-  float factx = ((float)(x) - (float)(width/2)) / (float)(width/2);
-  float facty = ((float)(-y) + (float)(height/2)) / (float)(width/2);
-  float angleh, anglev;
+  if (position[0] < 0)
+	position[0] = 0;
+  if (position[0] > map->width)
+	position[0] = map->width;
+  if (position[2] < 0)
+	position[2] = 0;
+  if (position[2] > map->height)
+	position[2] = map->height;
+  if (map->map[(int)position[2]][(int)position[0]] == WALL) {
+    look[0] = oldDir[0];
+    look[2] = oldDir[2];
+    position[0] = oldPos[0];
+    position[2] = oldPos[2];
 
-  //Horizontal
-  angleh = (float)factx * 360.0;
-  rotationVectY(angleh - angh, position, look);
-  angh = angleh;
-
-  //Vertical
-  
-  anglev = (float)facty * 179.0;
-  if (look[2] > position[2])
-	rotationVectX(-anglev + angv, position, look);
-  else
-	rotationVectX(anglev - angv, position, look);
-  angv = anglev;
-
+  }
 }
 
 void lookAt(GLfloat px, GLfloat py, GLfloat pz,
@@ -223,15 +269,20 @@ Model* GenerateGround(mapData *map,
 							char* normalVariableName,
 							char* texCoordVariableName)
 {
+  // NEED TO ADD 1 to get gound number of vertices.
+  // DON'T FORGET TO GET OFF AT THE END OF THE FUNCTION
   map->width += 1;
   map->height += 1;
+
   int vertexCount = map->width * map->height;
   int triangleCount = (map->width-1) * (map->height-1) * 2;
   int x, z;
 
   Model* model = malloc(sizeof(Model));
   memset(model, 0, sizeof(Model));
-	
+
+  model->vertexArray = malloc(sizeof(Model));
+  
   model->vertexArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
   model->normalArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
   model->texCoordArray = malloc(sizeof(GLfloat) * 2 * vertexCount);
@@ -253,9 +304,10 @@ Model* GenerateGround(mapData *map,
 		model->normalArray[(x + z * map->width)*3 + 1] = 1.0;
 		model->normalArray[(x + z * map->width)*3 + 2] = 0.0;
 		// Texture coordinates
-		model->texCoordArray[(x + z * map->width)*2 + 0] = x; // (float)x / tex->width;
-		model->texCoordArray[(x + z * map->width)*2 + 1] = z; // (float)z / tex->height;
+		model->texCoordArray[(x + z * map->width)*2 + 0] = x; // (float)x / map->width;
+		model->texCoordArray[(x + z * map->width)*2 + 1] = z; // (float)z / map->height;
 	  }
+
   for (x = 0; x < map->width-1; x++)
 	for (z = 0; z < map->height-1; z++)
 	  {
@@ -269,8 +321,12 @@ Model* GenerateGround(mapData *map,
 		model->indexArray[(x + z * (map->width-1))*6 + 5] = x+1 + (z+1) * map->width;
 	  }
 
+  map->width -= 1;
+  map->height -= 1;
+
+
   // End of ground generation
-  printError("Debug init ground step 1");
+  printError("Debug initialization of arrays");
   
   // Upload and set variables like LoadModelPlus
   glGenVertexArrays(1, &model->vao);
@@ -281,21 +337,21 @@ Model* GenerateGround(mapData *map,
 	glGenBuffers(1, &model->tb);
   
   glBindVertexArray(model->vao);
-  printError("Debug init ground step 2");  
+  printError("Debug Bind Buffer");  
 
   // VBO for vertex data
   glBindBuffer(GL_ARRAY_BUFFER, model->vb);
   glBufferData(GL_ARRAY_BUFFER, model->numVertices*3*sizeof(GLfloat), model->vertexArray, GL_STATIC_DRAW);
   glVertexAttribPointer(glGetAttribLocation(program, vertexVariableName), 3, GL_FLOAT, GL_FALSE, 0, 0); 
   glEnableVertexAttribArray(glGetAttribLocation(program, vertexVariableName));
-  printError("Debug init ground step 3");  
+  printError("Debug init buffer Vertex Array");  
   
 	// VBO for normal data
   glBindBuffer(GL_ARRAY_BUFFER, model->nb);
   glBufferData(GL_ARRAY_BUFFER, model->numVertices*3*sizeof(GLfloat), model->normalArray, GL_STATIC_DRAW);
   glVertexAttribPointer(glGetAttribLocation(program, normalVariableName), 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(glGetAttribLocation(program, normalVariableName));
-  printError("Debug init ground step 4");  
+  printError("Debug init buffer Normal array");  
   
   // VBO for texture coordinate data
   if (model->texCoordArray != NULL)
@@ -305,13 +361,25 @@ Model* GenerateGround(mapData *map,
 	  glVertexAttribPointer(glGetAttribLocation(program, texCoordVariableName), 2, GL_FLOAT, GL_FALSE, 0, 0);
 	  glEnableVertexAttribArray(glGetAttribLocation(program, texCoordVariableName));
 	}
-  printError("Debug init ground step 5");  
+  printError("Debug buffer Tex Array");  
 	
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->ib);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->numIndices*sizeof(GLuint), model->indexArray, GL_STATIC_DRAW);
-  printError("Debug init ground step 6");  
-	
+  printError("Debug buffer Index array");  
+
   return model;
+}
+
+int		getNbWalls(mapData *map) {
+  int x, z;
+  int nbWalls = 0;
+  for (x = 0; x < map->width; x++) {
+	for (z = 0; z < map->height; z++) {
+	  if (map->map[z][x] == WALL)
+		nbWalls++;
+	}
+  }
+  return nbWalls;
 }
 
 // vertex array object
@@ -339,20 +407,31 @@ void init(void)
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix);
 	glUniform1i(glGetUniformLocation(program, "tex"), 0); // Texture unit 0
 	LoadTGATextureSimple("Textures/g_floor03.tga", &texGround);
+	LoadTGATextureSimple("Textures/g_bricks30.tga", &texWall);
 	printError("Textures initialization");
 	
 	// Load terrain data
-	mapData *map = malloc(sizeof(map));
-	map->width = 4;
-	map->height = 4;
-	map->map = malloc(sizeof(char*) * 4);
-	map->map[0] = "1111";
-	map->map[1] = "1001";
-	map->map[2] = "1001";
-	map->map[3] = "1111";
-
+	map = malloc(sizeof(map));
+	map->width = 50;
+	map->height = 10;
+	map->map = malloc(sizeof(char*) * 10);
+	map->map[0] = "11111111111111111111111111111111111111111111111111";
+	map->map[1] = "12000000000000000000011111111110000001000100001111";
+	map->map[2] = "11111111111111111110000000000000110101010101101111";
+	map->map[3] = "11000011110000011111111111111111110100010001101111";
+	map->map[4] = "10000101111111000000000000000000000111111110001111";
+	map->map[5] = "11110100000100011111111111111111111111111110111111";
+	map->map[6] = "13000110110101111111111110000000000000000000111111";
+	map->map[7] = "11101110010001111111111111110001111111100110011111";
+	map->map[8] = "11000000001111111111111111111001111111110000111111";
+	map->map[9] = "11111111111111111111111111111111111111111111111111";
+	
 	ground = GenerateGround(map, program, "inPos", "inNorm", "inTex");
-	printError("init terrain");
+	printError("Ground init");
+	wall = LoadModelPlus("cube.obj", program, "inPos", "inNorm", "inTex");
+	printError("Walls init");
+
+	setPlayerAtStart();
 	
 	//	printError("Objects Initialisation");
 }
@@ -377,10 +456,22 @@ void display(void)
   IdentityMatrix(modelView);
   Mult(camMatrix, modelView, total);
   glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total);
-	
   glBindTexture(GL_TEXTURE_2D, texGround);		// Bind Our Texture tex1
   DrawModel(ground);
-
+  
+  int x, z;
+  glBindTexture(GL_TEXTURE_2D, texWall);		// Bind Our Texture tex1
+  for (x = 0; x < map->width; x++)
+	for (z = 0; z < map->height; z++) {
+	  if (map->map[z][x] == WALL) {
+		modelView[3] = x;
+		modelView[11] = z;
+		Mult(camMatrix, modelView, total);
+		glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total);
+		DrawModel(wall);
+	  }
+	}
+  
   printError("Display Ground");
   
   glutSwapBuffers();
@@ -402,7 +493,7 @@ int main(int argc, char **argv)
 	init ();
 	initKeymapManager();
 
-	glutPassiveMotionFunc(&mouseMove);
+	//	glutPassiveMotionFunc(&mouseMove);
 	glutReshapeFunc(&getWindowResize);
 	glutTimerFunc(20, &timer, 0);
 	
