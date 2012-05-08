@@ -11,7 +11,7 @@ uniform mat4 mdlMatrix;
 
 void main(void)
 {
-  //  mat3 normalMatrix1 = mat3(mdlMatrix);
+  mat3 normalMatrix1 = mat3(mdlMatrix);
   gl_Position = projMatrix * mdlMatrix * vec4(inPos, 1.0);
   oNorm = /*normalMatrix1 **/ inNorm;
   oTex = inTex;
