@@ -24,6 +24,7 @@ mapData *map;
 // Angle & pos matrix
 GLfloat position[] =	{ 0.0f, 0.5f, 0.0f };
 GLfloat look[] =	{ 10.0f, 0.5f, 10.0f };
+Point3D warp = {0.0f,0.5f,0.0f};
 float move = 0.02;
 // Are we flying or not ?!
 int flying = 0;
@@ -112,7 +113,19 @@ void setPlayerAtStart() {
 		look[0] = x + 0.5;
 		look[2] = z + 2.5;
 	  }
-		
+}
+
+Point3D getWarpPosition() {
+  int x, z;
+  
+  for (x = 0; x < map->width-1; x++)
+	for (z = 0; z < map->height-1; z++)
+	  if (map->map[z][x] == WARP) {
+		warp.x = x + 0.5;
+		warp.y = 0.5;
+		warp.z = z + 0.5;
+	  }	
+  return warp;
 }
 
 void moveThePlayer() {
@@ -413,22 +426,21 @@ void init(void)
 	printError("Textures initialization");
 	
 	// Load terrain data
-
-	map = loadMap("map");
-	/* map = malloc(sizeof(map)); */
-	/* map->width = 50; */
-	/* map->height = 10; */
-	/* map->map = malloc(sizeof(char*) * 10); */
-	/* map->map[0] = "11111111111111111111111111111111111111111111111111"; */
-	/* map->map[1] = "12000000000000000000011011101110000001000100000001"; */
-	/* map->map[2] = "11111111011111101110000000000000110101010101101101"; */
-	/* map->map[3] = "11000011110000010001111111111111110100010001101101"; */
-	/* map->map[4] = "10000101111111000100000000000000000110111110000001"; */
-	/* map->map[5] = "11110100000100011011110111101110111010110110111101"; */
-	/* map->map[6] = "13000110110101000001011110000000000000000000111001"; */
-	/* map->map[7] = "11101110010001101100000011110001101101100110010011"; */
-	/* map->map[8] = "11000000001110001111101110000001110001110000000111"; */
-	/* map->map[9] = "11111111111111111111111111111111111111111111111111"; */
+	//	map = loadMap("map");
+	map = malloc(sizeof(map));
+	map->width = 50;
+	map->height = 10;
+	map->map = malloc(sizeof(char*) * 10);
+	map->map[0] = "11111111111111111111111111111111111111111111111111";
+	map->map[1] = "12000000000000000000011011101110000001000100000001";
+	map->map[2] = "11111111011111101110000000000000110101010101101101";
+	map->map[3] = "11000011110000010001111111111111110100010001101101";
+	map->map[4] = "10000101111111000100000000000000000110111110000001";
+	map->map[5] = "11110100000100011011110111101110111010110110111101";
+	map->map[6] = "13000110110101000001011110000000000000000000111001";
+	map->map[7] = "11101110010001101100000011110001101101100110010011";
+	map->map[8] = "11000000001110001111101110000001110001110000000111";
+	map->map[9] = "11111111111111111111111111111111111111111111111111";
 	
 	ground = GenerateGround(map, program, "inPos", "inNorm", "inTex");
 	printError("Ground init");
@@ -441,7 +453,7 @@ void init(void)
 	printError("Skybox init");
 	
 	setPlayerAtStart();
-	
+	getWarpPosition();
 	//	printError("Objects Initialisation");
 }
 
@@ -470,16 +482,19 @@ void display(void)
 
   glUseProgram(skyprog);
   glDisable(GL_DEPTH_TEST);
-  glUniformMatrix4fv(glGetUniformLocation(skyprog, "mdlMatrix"), 1, GL_TRUE, camBox);
+  glUniformMatrix4fv(glGetUniformLocation(skyprog, "mdlMatrix"), 1, GL_TRUE, modelView);
+  glUniformMatrix4fv(glGetUniformLocation(skyprog, "camMatrix"), 1, GL_TRUE, camBox);
   glBindTexture(GL_TEXTURE_2D, texSky);
   DrawModel(skybox);
   glEnable(GL_DEPTH_TEST);
   
   glUseProgram(program);
-  Mult(camMatrix, modelView, total);
-
+  Point3D pos = { position[0], position[1], position[2]};
+  glUniform3fv(glGetUniformLocation(program, "lightSourcePlayer"), 1, &pos.x);
+  glUniform3fv(glGetUniformLocation(program, "lightSourceWarp"), 1, &warp.x);
   
-  glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total);
+  glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix);
+  glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
   glBindTexture(GL_TEXTURE_2D, texGround);		// Bind Our Texture tex1
   DrawModel(ground);
   
@@ -491,7 +506,7 @@ void display(void)
 		modelView[3] = x;
 		modelView[11] = z;
 		Mult(camMatrix, modelView, total);
-		glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total);
+		glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
 		DrawModel(wall);
 	  }
 	}
