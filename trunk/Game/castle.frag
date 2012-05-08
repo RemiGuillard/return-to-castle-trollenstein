@@ -1,7 +1,7 @@
 #version 150
 
 in	 vec3	oNorm;
-//in	 vec3	fragPos;
+in	 vec3	fragPos;
 
 //uniform  vec3		lightSourceWarp;
 uniform  vec3		lightSourcePlayer;
@@ -59,8 +59,8 @@ void main(void)
       iDiff = calcDiffLight(lightDir, vec3(0.0,0.0,1.0), oNorm, il);
       iSpec = calcSpecLight(lightDir, oNorm, 30.0, il, fragPos, k);	
       intensity += iDiff + iSpec;*/
-  float shade = dot(lightSourcePlayer, normalize(oNorm));
-  //  shade = 0.75;
+  //  float shade = dot(normalize(vec3()), normalize(oNorm));
+  float shade = 0.75;
   vec4 myTex = texture(tex, oTex.st);
   outColor = myTex * vec4(shade, shade, shade, 1.0);// * vec4(intensity, 1.0);// * vec4(lightSourcePlayer, 1.0);
 }

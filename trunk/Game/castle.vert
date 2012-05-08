@@ -20,7 +20,7 @@ void main(void)
   gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(inPos, 1.0);
   
   oNorm = inNorm;//normalize(vec3(inNorm * mat4x3(worldView)));
-//  fragPos = normalize(vec3(inPos * mat4x3(worldView)));
+  //fragPos = normalize(vec3(inPos * mat4x3(worldView)));
   
   oTex = inTex;
 }
