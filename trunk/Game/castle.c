@@ -383,10 +383,10 @@ int		getNbWalls(mapData *map) {
 }
 
 // vertex array object
-Model *ground, *wall;
+Model *ground, *wall, *skybox;
 // Reference to shader program
-GLuint program;
-GLuint texGround, texWall;
+GLuint program, skyprog;
+GLuint texGround, texWall, texSky;
 
 void init(void)
 {
@@ -401,6 +401,7 @@ void init(void)
 	
 	// Load and compile shader
 	program = loadShaders("castle.vert", "castle.frag");
+	skyprog = loadShaders("skybox.vert", "skybox.frag");
 	glUseProgram(program);
 	printError("Shader initialization");
 	
@@ -408,6 +409,7 @@ void init(void)
 	glUniform1i(glGetUniformLocation(program, "tex"), 0); // Texture unit 0
 	LoadTGATextureSimple("Textures/g_floor03.tga", &texGround);
 	LoadTGATextureSimple("Textures/g_bricks30.tga", &texWall);
+	LoadTGATextureSimple("Textures/SkyBox512.tga", &texSky);
 	printError("Textures initialization");
 	
 	// Load terrain data
@@ -416,21 +418,26 @@ void init(void)
 	map->height = 10;
 	map->map = malloc(sizeof(char*) * 10);
 	map->map[0] = "11111111111111111111111111111111111111111111111111";
-	map->map[1] = "12000000000000000000011111111110000001000100001111";
-	map->map[2] = "11111111111111111110000000000000110101010101101111";
-	map->map[3] = "11000011110000011111111111111111110100010001101111";
-	map->map[4] = "10000101111111000000000000000000000111111110001111";
-	map->map[5] = "11110100000100011111111111111111111111111110111111";
-	map->map[6] = "13000110110101111111111110000000000000000000111111";
-	map->map[7] = "11101110010001111111111111110001111111100110011111";
-	map->map[8] = "11000000001111111111111111111001111111110000111111";
+	map->map[1] = "12000000000000000000011011101110000001000100000001";
+	map->map[2] = "11111111011111101110000000000000110101010101101101";
+	map->map[3] = "11000011110000010001111111111111110100010001101101";
+	map->map[4] = "10000101111111000100000000000000000110111110000001";
+	map->map[5] = "11110100000100011011110111101110111010110110111101";
+	map->map[6] = "13000110110101000001011110000000000000000000111001";
+	map->map[7] = "11101110010001101100000011110001101101100110010011";
+	map->map[8] = "11000000001110001111101110000001110001110000000111";
 	map->map[9] = "11111111111111111111111111111111111111111111111111";
 	
 	ground = GenerateGround(map, program, "inPos", "inNorm", "inTex");
 	printError("Ground init");
-	wall = LoadModelPlus("cube.obj", program, "inPos", "inNorm", "inTex");
+	wall = LoadModelPlus("models/cube.obj", program, "inPos", "inNorm", "inTex");
 	printError("Walls init");
 
+	glUseProgram(skyprog);
+	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix);
+	skybox = LoadModelPlus("models/skybox.obj", skyprog, "inPos", "inNorm", "inTex");
+	printError("Skybox init");
+	
 	setPlayerAtStart();
 	
 	//	printError("Objects Initialisation");
@@ -446,15 +453,30 @@ void display(void)
 
   printError("pre display");
 	
-  glUseProgram(program);
 
   // Build matrix
   lookAt(position[0], position[1], position[2],
 		 look[0], look[1], look[2],
 		 0, 1, 0,
 		 camMatrix);
+  GLfloat camBox[16] = { camMatrix[0],  camMatrix[1],  camMatrix[2],  0.0,
+						 camMatrix[4],  camMatrix[5],  camMatrix[6],  0.0,
+						 camMatrix[8],  camMatrix[9],  camMatrix[10], 0.0,
+						 camMatrix[12], camMatrix[13], camMatrix[14], camMatrix[15]};
+  
   IdentityMatrix(modelView);
+
+  glUseProgram(skyprog);
+  glDisable(GL_DEPTH_TEST);
+  glUniformMatrix4fv(glGetUniformLocation(skyprog, "mdlMatrix"), 1, GL_TRUE, camBox);
+  glBindTexture(GL_TEXTURE_2D, texSky);
+  DrawModel(skybox);
+  glEnable(GL_DEPTH_TEST);
+  
+  glUseProgram(program);
   Mult(camMatrix, modelView, total);
+
+  
   glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total);
   glBindTexture(GL_TEXTURE_2D, texGround);		// Bind Our Texture tex1
   DrawModel(ground);
