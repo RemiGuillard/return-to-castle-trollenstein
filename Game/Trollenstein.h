@@ -16,4 +16,6 @@ typedef struct {
   
 } mapData;
 
+mapData *loadMap(char* fileName);
+
 #endif //!_TROLLENSTEIN_H
