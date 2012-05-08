@@ -9,11 +9,10 @@ uniform mat4 camMatrix;
 uniform mat4 mdlMatrix; // Model to World
 
 out	 vec2 oTex;
-out	 vec3 oNorm;
 
 void main(void)
 {
-  gl_Position =  projMatrix * camMatrix * mdlMatrix * vec4(inPos, 1);
-  oNorm = inNorm;
+  gl_Position =  projMatrix * camMatrix * vec4(inPos, 1);
+
   oTex = inTex;
 }

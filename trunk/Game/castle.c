@@ -25,7 +25,7 @@ mapData *map;
 GLfloat position[] =	{ 0.0f, 0.5f, 0.0f };
 GLfloat look[] =	{ 10.0f, 0.5f, 10.0f };
 Point3D warp = {0.0f,0.5f,0.0f};
-float move = 0.02;
+float move = 0.05;
 // Are we flying or not ?!
 int flying = 0;
 
@@ -95,6 +95,7 @@ void rotationVectX(float angle, GLfloat *A, GLfloat *B) {
   float xprim; float yprim;
 
   SetVector(B[0] - A[0], B[1] - A[1], B[2] - A[2], &AB);
+  Normalize(&AB);
   xprim = AB.y * cos(getRad(angle)) - AB.z * sin(getRad(angle));
   yprim = AB.y * sin(getRad(angle)) + AB.z * cos(getRad(angle));
 
@@ -151,8 +152,9 @@ void moveThePlayer() {
 
   if (keyIsDown('o'))
 	  flying = 1;
-  if (keyIsDown('z')) { //UP
+  if (keyIsDown('w')) { //UP
     SetVector(look[0] - position[0], look[1] - position[1], look[2] - position[2], &AB);
+    Normalize(&AB);
     look[0] += move * AB.x;
     look[2] += move * AB.z;
     position[0] += move * AB.x;
@@ -164,6 +166,7 @@ void moveThePlayer() {
   }
   if (keyIsDown('s')) { //DOWN
     SetVector(look[0] - position[0], look[1] - position[1], look[2] - position[2], &AB);
+    Normalize(&AB);
     look[0] -= move * AB.x;
     look[2] -= move * AB.z;
     position[0] -= move * AB.x;
@@ -176,6 +179,7 @@ void moveThePlayer() {
   if (keyIsDown('d')) { //RIGHT
     rotationVectY(90, orig, dir);
     SetVector(dir[0] - orig[0], dir[1] - orig[1], dir[2] - orig[2], &AB);
+    Normalize(&AB);
     look[0] += move * AB.x;
     look[2] += move * AB.z;
     position[0] += move * AB.x;
@@ -185,9 +189,10 @@ void moveThePlayer() {
 	  position[1] += move * AB.y;
 	}
   }
-  if (keyIsDown('q')) { //LEFT
+  if (keyIsDown('a')) { //LEFT
     rotationVectY(90, orig, dir);
     SetVector(dir[0] - orig[0], dir[1] - orig[1], dir[2] - orig[2], &AB);
+    Normalize(&AB);
     look[0] -= move * AB.x;
     look[2] -= move * AB.z;
     position[0] -= move * AB.x;
@@ -197,7 +202,7 @@ void moveThePlayer() {
 	  position[1] -= move * AB.y;
 	}
   }
-  if (keyIsDown('a')) { // Move camera left
+  if (keyIsDown('q')) { // Move camera left
 	rotationVectY(-ANGMOV, position, look);
 	angh -= ANGMOV;
 	angh = fmodf(angh, 360.0);
@@ -237,7 +242,7 @@ void moveThePlayer() {
 	position[2] = 0;
   if (position[2] > map->height)
 	position[2] = map->height;
-  if (map->map[(int)position[2]][(int)position[0]] == WALL) {
+  if (map->map[(int)position[2]][(int)position[0]] == WALL && flying == 0) {
     look[0] = oldDir[0];
     look[2] = oldDir[2];
     position[0] = oldPos[0];
@@ -294,8 +299,6 @@ Model* GenerateGround(mapData *map,
   Model* model = malloc(sizeof(Model));
   memset(model, 0, sizeof(Model));
 
-  model->vertexArray = malloc(sizeof(Model));
-  
   model->vertexArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
   model->normalArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
   model->texCoordArray = malloc(sizeof(GLfloat) * 2 * vertexCount);
@@ -396,7 +399,7 @@ int		getNbWalls(mapData *map) {
 }
 
 // vertex array object
-Model *ground, *wall, *skybox;
+Model *ground, *wall, *skybox, *wall2;
 // Reference to shader program
 GLuint program, skyprog;
 GLuint texGround, texWall, texSky;
@@ -426,29 +429,19 @@ void init(void)
 	printError("Textures initialization");
 	
 	// Load terrain data
-	//	map = loadMap("map");
-	map = malloc(sizeof(map));
-	map->width = 50;
-	map->height = 10;
-	map->map = malloc(sizeof(char*) * 10);
-	map->map[0] = "11111111111111111111111111111111111111111111111111";
-	map->map[1] = "12000000000000000000011011101110000001000100000001";
-	map->map[2] = "11111111011111101110000000000000110101010101101101";
-	map->map[3] = "11000011110000010001111111111111110100010001101101";
-	map->map[4] = "10000101111111000100000000000000000110111110000001";
-	map->map[5] = "11110100000100011011110111101110111010110110111101";
-	map->map[6] = "13000110110101000001011110000000000000000000111001";
-	map->map[7] = "11101110010001101100000011110001101101100110010011";
-	map->map[8] = "11000000001110001111101110000001110001110000000111";
-	map->map[9] = "11111111111111111111111111111111111111111111111111";
-	
+	map = loadMap("map");
+	if (map == NULL)
+	  exit(0);
+	printError("Load Map init");
+
 	ground = GenerateGround(map, program, "inPos", "inNorm", "inTex");
 	printError("Ground init");
 	wall = LoadModelPlus("models/cube.obj", program, "inPos", "inNorm", "inTex");
+	wall2 = LoadModelPlus("models/cube2.obj", program, "inPos", "inNorm", "inTex");
 	printError("Walls init");
 
 	glUseProgram(skyprog);
-	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix);
+	glUniformMatrix4fv(glGetUniformLocation(skyprog, "projMatrix"), 1, GL_TRUE, projectionMatrix);
 	skybox = LoadModelPlus("models/skybox.obj", skyprog, "inPos", "inNorm", "inTex");
 	printError("Skybox init");
 	
@@ -474,9 +467,9 @@ void display(void)
 		 0, 1, 0,
 		 camMatrix);
   GLfloat camBox[16] = { camMatrix[0],  camMatrix[1],  camMatrix[2],  0.0,
-						 camMatrix[4],  camMatrix[5],  camMatrix[6],  0.0,
-						 camMatrix[8],  camMatrix[9],  camMatrix[10], 0.0,
-						 camMatrix[12], camMatrix[13], camMatrix[14], camMatrix[15]};
+			 camMatrix[4],  camMatrix[5],  camMatrix[6],  0.0,
+			 camMatrix[8],  camMatrix[9],  camMatrix[10], 0.0,
+			 camMatrix[12], camMatrix[13], camMatrix[14], camMatrix[15]};
   
   IdentityMatrix(modelView);
 
@@ -489,9 +482,9 @@ void display(void)
   glEnable(GL_DEPTH_TEST);
   
   glUseProgram(program);
-  Point3D pos = { position[0], position[1], position[2]};
+  Point3D pos = { position[0], 0.50, position[2]};
   glUniform3fv(glGetUniformLocation(program, "lightSourcePlayer"), 1, &pos.x);
-  glUniform3fv(glGetUniformLocation(program, "lightSourceWarp"), 1, &warp.x);
+  //glUniform3fv(glGetUniformLocation(program, "lightSourceWarp"), 1, &warp.x);
   
   glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix);
   glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
@@ -500,6 +493,7 @@ void display(void)
   
   int x, z;
   glBindTexture(GL_TEXTURE_2D, texWall);		// Bind Our Texture tex1
+  DrawModel(wall2);
   for (x = 0; x < map->width; x++)
 	for (z = 0; z < map->height; z++) {
 	  if (map->map[z][x] == WALL) {

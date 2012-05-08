@@ -37,7 +37,6 @@ mapData *loadMap(char* fileName)
         n++;
       i++;
     }
-  printf("nb de colonne = %d    || nb de ligne = %d\n", c, n);
   map = malloc(sizeof(char *) * (n + 1));
   map[n] = NULL;
   i = 0;
@@ -47,22 +46,22 @@ mapData *loadMap(char* fileName)
     {
       map[i] = malloc(c + 1);
       strncpy(map[i], &buf[k], c - 1);
-      map[i][c] = '\0';
+      map[i][c - 1] = '\0';
       k += c;
       i++;
     }
-  i = 0;
+  /*  i = 0;
   while (map[i] != NULL)
     {
       printf("%s\n", map[i]);
       i++;
     }
-
+  */
   free(buf);
   mapData *res = malloc(sizeof(res));
   res->map = map;
   res->height = n;
-  res->width = c;
+  res->width = c - 1;
   return res;
 }
 
