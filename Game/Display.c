@@ -43,7 +43,7 @@ void display(void)
 
   // Light source position = player position
   // to emulate a torch 
-  GLfloat pos[] = { position[0], 0.50, position[2]};
+  GLfloat pos[] = { position[0] , 0.10, position[2]};
   glUniform3fv(glGetUniformLocation(program, "lightSourcePlayer"), 1, pos);
 
   // SEND MATRICES FOR THE DISPLAY
