@@ -27,7 +27,7 @@ extern int width;
 extern Model *ground, *wall, *skybox, *warp;
 // Reference to shader program
 extern GLuint program, skyprog;
-extern GLuint texGround, texWall, texSky, texWarp;
+extern GLuint texGround, texWall, texGroundN, texWallN, texSky, texWarp;
 
 
 void display();

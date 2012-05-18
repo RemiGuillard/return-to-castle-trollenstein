@@ -73,27 +73,22 @@ void setPlayerAtStart() {
 Model *ground, *wall, *skybox, *warp;
 // Reference to shader program
 GLuint program, skyprog;
-GLuint texGround, texWall, texSky, texWarp;
-GLuint tex1, tex2, tex3, tex4, tex5, tex6;
+GLuint texGround, texWall, texGroundN, texWallN, texSky, texWarp;
+GLuint tgro1, tgron1, twall1, twalln1;
+GLuint tgro2, tgron2, twall2, twalln2;
 
 void setTextures() {
 
-  if (currentMap % 4 == 0) {
-	texGround = tex1;
-	texWall = tex2;
-	texWarp = tex3;
-  } else if (currentMap % 4 == 1) {
-	texGround = tex2;
-	texWall = tex3;
-	texWarp = tex4;
-  } else if (currentMap % 4 == 2) {
-	texGround = tex3;
-	texWall = tex4;
-	texWarp = tex1;
-  } else {
-	texGround = tex4;
-	texWall = tex1;
-	texWarp = tex2;
+  if (currentMap % 2 == 0) {
+	texGround = tgro1;
+	texWall = twall1;
+	texGroundN = tgron1;
+	texWallN = twalln1;
+  } else if (currentMap % 2 == 1) {
+	texGround = tgro2;
+	texWall = twall2;
+	texGroundN = tgron2;
+	texWallN = twalln2;
   }
 }
 
@@ -127,7 +122,6 @@ void changeMap() {
   }
   ground = GenerateGround(map, program, "inPos", "inNorm", "inTex");
   printError("Ground init");
-  printError("Walls init");
 
   setTextures();
   
@@ -159,26 +153,37 @@ void init(void)
   // depending of the time)...
   glUseProgram(program);
   wall = LoadModelPlus("models/cube.obj", program, "inPos", "inNorm", "inTex");
-  warp = LoadModelPlus("models/cube.obj", program, "inPos", "inNorm", "inTex");
 
   // SEND DATA TO SHADERS
   glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix);
-  glUniform1i(glGetUniformLocation(program, "tex"), 0);
+  //  glUniform1i(glGetUniformLocation(program, "tex"), 0);
 
   // TEXTURES LOADING
-  LoadTGATextureSimple("Textures/g_floor03.tga", &tex1);
-  LoadTGATextureSimple("Textures/g_bricks30.tga", &tex2);
-  LoadTGATextureSimple("Textures/SkyBox512.tga", &texSky);
-  LoadTGATextureSimple("Textures/Warp.tga", &tex3);
-  LoadTGATextureSimple("Textures/g_grates02.tga", &tex4);
-  LoadTGATextureSimple("Textures/g_stripesbas4b.tga", &tex5);
-  LoadTGATextureSimple("Textures/g_floor08.tga", &tex6);
+  LoadTGATextureSimple("Textures/Warp.tga", &texWarp);
+
+  LoadTGATextureSimple("Textures/stonewallDiffuse.tga", &twall1);
+  LoadTGATextureSimple("Textures/stonewallNormal.tga", &twalln1);
+  LoadTGATextureSimple("Textures/metalSheetDiffuse.tga", &tgro1);
+  LoadTGATextureSimple("Textures/metalSheetNormal.tga", &tgron1);
+
+  LoadTGATextureSimple("Textures/bricksDiffuse.tga", &twall2);
+  LoadTGATextureSimple("Textures/bricksNormal.tga", &twalln2);
+  LoadTGATextureSimple("Textures/cobblestonesDiffuse.tga", &tgro2);
+  LoadTGATextureSimple("Textures/cobblestonesNormal.tga", &tgron2);
+
+  warp = LoadModelPlus("models/teapot.obj", program, "inPos", "inNorm", "inTex");
+  
   printError("Textures initialization");
   
   // SKYBOX LOADING
   glUseProgram(skyprog);
+
+  LoadTGATextureSimple("Textures/SkyBox512.tga", &texSky);
+
   glUniformMatrix4fv(glGetUniformLocation(skyprog, "projMatrix"), 1, GL_TRUE, projectionMatrix);
   skybox = LoadModelPlus("models/skybox.obj", skyprog, "inPos", "inNorm", "inTex");
+
+  
   printError("Skybox init");
 
   // Change map function

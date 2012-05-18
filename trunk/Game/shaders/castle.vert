@@ -22,7 +22,8 @@ void main(void)
   mat4 worldView = projMatrix * mdlMatrix;
   gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(inPos, 1);
   
-  oNorm = normalize(vec3(inNorm * mat4x3(worldView)));
+  //oNorm = normalize(vec3(inNorm * mat4x3(worldView)));
+  oNorm = vec3(mdlMatrix * vec4(inNorm, 1.0));
   // fragPos = normalize(vec3(inPos * mat4x3(worldView)));
   fragPos = vec3(mdlMatrix * vec4(inPos,1.0));
   

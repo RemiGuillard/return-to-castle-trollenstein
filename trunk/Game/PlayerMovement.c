@@ -88,18 +88,18 @@ void moveThePlayer() {
   if (keyIsDown('g')) { // Move camera down
     if (angv - ANGMOV > -179.0) {
       if (look[2] > position[2])
-	rotationVectX(-ANGMOV, position, look);
+		rotationVectX(-ANGMOV, position, look);
       else
-	rotationVectX(ANGMOV, position, look);
+		rotationVectX(ANGMOV, position, look);
       angv -= ANGMOV;
     }
   }
   if (keyIsDown('t')) { // move camera up
     if (angv + ANGMOV < 179.0) {
       if (look[2] > position[2])
-	rotationVectX(ANGMOV, position, look);
+		rotationVectX(ANGMOV, position, look);
       else
-	rotationVectX(-ANGMOV, position, look);
+		rotationVectX(-ANGMOV, position, look);
       angv += ANGMOV;
     }
   }
@@ -115,14 +115,20 @@ void moveThePlayer() {
     position[2] = 0;
   if (position[2] > map->height)
     position[2] = map->height;
-  if (map->map[(int)position[2]][(int)position[0]] == WALL && flying == 0) {
-    look[0] = oldDir[0];
-    look[2] = oldDir[2];
-    position[0] = oldPos[0];
-    position[2] = oldPos[2];
-  }
-  if (map->map[(int)position[2]][(int)position[0]] == WARP) {
+	if (map->map[(int)(position[2]+0.15)][(int)position[0]] == WALL ||
+		map->map[(int)(position[2]-0.15)][(int)(position[0])] == WALL) {
+	  look[2] = oldDir[2];
+	  position[2] = oldPos[2];
+	}
+	if (map->map[(int)(position[2])][(int)(position[0]-0.15)] == WALL || 
+		map->map[(int)(position[2])][(int)(position[0]+0.15)] == WALL ) {
+	  look[0] = oldDir[0];
+	  position[0] = oldPos[0];  
+	}
+  if (map->map[(int)(position[2]+0.2)][(int)position[0]] == WARP ||
+	  map->map[(int)(position[2])][(int)(position[0]-0.2)] == WARP || 
+	  map->map[(int)(position[2]-0.2)][(int)(position[0])] == WARP ||
+	  map->map[(int)(position[2])][(int)(position[0]+0.2)] == WARP )
     changeMap();
-  }
 }
 
