@@ -341,8 +341,8 @@ Model* GenerateTerrain(TextureData *tex,
 			model->normalArray[(x + z * tex->width)*3 + 1] = 1.0;
 			model->normalArray[(x + z * tex->width)*3 + 2] = 0.0;
 // Texture coordinates. You may want to scale them.
-			model->texCoordArray[(x + z * tex->width)*2 + 0] = x; // (float)x / tex->width;
-			model->texCoordArray[(x + z * tex->width)*2 + 1] = z; // (float)z / tex->height;
+			model->texCoordArray[(x + z * tex->width)*2 + 0] = x; //*/ (float)x / tex->width;
+			model->texCoordArray[(x + z * tex->width)*2 + 1] = z; //*/ (float)z / tex->height;
 		}
 	for (x = 0; x < tex->width-1; x++)
 		for (z = 0; z < tex->height-1; z++)
@@ -428,7 +428,7 @@ void init(void)
 	
 // Load terrain data
 
-	LoadTGATexture("ok2.tga", &ttex);
+	LoadTGATexture("TERRA2.tga", &ttex);
 	tm = GenerateTerrain(&ttex, program, "inPosition", "inNormal", "inTexCoord");
 	printError("init terrain");
 }
