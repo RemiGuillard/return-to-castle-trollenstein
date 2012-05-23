@@ -60,26 +60,12 @@ void display(void)
 
   GLfloat pos[] = { position[0] , 0.5, position[2]};
   glUniform3fv(glGetUniformLocation(program, "lightSourcePlayer"), 1, pos);
-  pos[0] = warpPos.x; pos[1] = 1.0; pos[1] = warpPos.z;
+  pos[0] = warpPos.x + 0.5 ; pos[1] = 0.1; pos[2] = warpPos.z + 0.5;
   glUniform3fv(glGetUniformLocation(program, "lightSourceWarp"), 1, pos);
 
   // DRAW THE WARP SOME TIME SO THE WARP LOCATION IS EASIER TO FIND
   glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
   DrawModel(warp);
-  /*  modelView[7] = 1.0;
-  glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
-  DrawModel(warp);
-  modelView[7] = 2.0;
-  glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
-  DrawModel(warp);
-  modelView[7] = 5.0;
-  glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
-  DrawModel(warp);
-  */
-
-  // Light source position = player position
-  // to emulate a torch 
-  //  GLfloat pos[] = { 3.0 , 4.0, 2.0};
 
   // SEND MATRICES FOR THE DISPLAY
   IdentityMatrix(modelView);  
@@ -110,7 +96,7 @@ void display(void)
       if (map->map[z][x] == WALL) {
 		modelView[3] = x;
 		modelView[11] = z;
-		Mult(camMatrix, modelView, total);
+		//		Mult(camMatrix, modelView, total);
 		glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, modelView);
 		DrawModel(wall);
       }

@@ -3,6 +3,8 @@
 // NORMAL AND FRAGMENT POSITION
 in	 vec3	oNorm;
 in	 vec3	fragPos;
+in	 vec3	lightPos;
+in	 vec3	lightWarp;
 
 // POSITION OF LIGHT SOURCE
 uniform  vec3		lightSourcePlayer;
@@ -25,8 +27,8 @@ vec3	calcDiffLight(vec3 lightDir, vec3 lightColor, vec3 normal, float lightInten
 
   intensity = dot(lightDir, normal);
   intensity = max(intensity, 0.0);
-  lamberFact = max(dot(lightDir, normal), 0.0);
-  diffLight = clamp(lightColor * lightIntensity * /*intensity*/lamberFact, 0.0, 1.0);
+  //  lamberFact = max(dot(lightDir, normal), 0.0);
+  diffLight = clamp(lightColor * lightIntensity * intensity /*lamberFact*/, 0.0, 1.0);
   
   return diffLight;
 }
@@ -37,12 +39,11 @@ vec3	calcSpecLight(vec3 lightDir, vec3 normal, float speculat, float lightIntens
   vec3	specLight;
   vec3	refl;
   float	anglePhi;
-  float shininess;
-  vec3 halfVector = normalize(fragPos + lightDir);
+
   refl = normalize(2.0 * dot(normal, lightDir) * normal - lightDir);
   anglePhi = dot(refl, -viewDir);
-  //  specLight = k * lightIntensity * max(0, pow(anglePhi, speculat));
-  specLight = k * lightIntensity * pow (max (dot (lightDir, normal), 0.0), 2.0);
+  specLight = k * lightIntensity * max(0, pow(anglePhi, speculat));
+  //specLight = k * lightIntensity * pow (max (dot (lightDir, normal), 0.0), speculat);
   return specLight;
 }
 
@@ -59,17 +60,19 @@ void main(void)
   iDiff = vec3(0.0, 0.0, 0.0);
   iSpec = vec3(0.0, 0.0, 0.0);
 
-  vec3 myNorm = normalize(vec3(2.0 * texture(texNorm, oTex.st) - 1.0));
-
-  lightDir = normalize(lightSourcePlayer - fragPos);
-  iDiff = calcDiffLight(lightDir, vec3(0.80,0.70,0.70), myNorm, il);
-  iSpec = calcSpecLight(lightDir, myNorm, 0.1, il, fragPos, k);	
+  lightDir = lightPos - fragPos;
+  float length = length(lightDir);
+  lightDir = normalize(lightDir);
+  iDiff = calcDiffLight(lightDir, vec3(1.0,0.30,0.0), oNorm, il);
+  iSpec = calcSpecLight(lightDir, oNorm, 50.0, il, normalize(fragPos), k);
+  iDiff /= (length * length);
+  iSpec /= (length * length);
   intensity += iDiff + iSpec;
 
-  lightDir = normalize(lightSourceWarp - fragPos);
-  iDiff = calcDiffLight(lightDir, vec3(0.80,0.0, 0.0), myNorm, il);
-  iSpec = calcSpecLight(lightDir, myNorm, 0.1, il, fragPos, k);	
-  intensity += iDiff + iSpec;
+  /* lightDir = normalize(lightWarp - fragPos); */
+  /* iDiff = calcDiffLight(lightDir, vec3(0.0,0.0, 0.80), myNorm, il); */
+  /* iSpec = calcSpecLight(lightDir, myNorm, 100.0, il, normalize(fragPos), k);	 */
+  /* intensity += iDiff + iSpec; */
 
   vec4 myTex = texture(texUnit, oTex.st);
   outColor = myTex * vec4(intensity, 1.0);
