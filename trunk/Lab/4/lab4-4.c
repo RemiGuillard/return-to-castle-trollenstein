@@ -471,10 +471,31 @@ void init(void)
 
 float	getPosYOnMap(float x, float z, Model* tm) {
 
-  float Ypos;
-
-  Ypos = tm->vertexArray[((int)x + (int)z * tWidth)*3 + 1];
+  float			Ypos;
   
+  GLfloat		*A = &tm->vertexArray[((int)x + (int)z * tWidth)*3],
+	*B = &tm->vertexArray[((int)x + ((int)z + 1) * tWidth)*3],
+	*C = &tm->vertexArray[((int)x + 1 + (int)z * tWidth)*3],
+	*D = &tm->vertexArray[((int)x + 1 + ((int)z + 1) * tWidth)*3];
+	
+  Point3D AB, AC, POS;
+  float factx, factz;
+
+  POS.x = x - A[0]; POS.y = A[1]; POS.z = z - A[2];
+  SetVector(B[0] - A[0], B[1] - A[1], B[2] - A[2], &AB);
+  SetVector(C[0] - A[0], C[1] - A[1], C[2] - A[2], &AC);
+
+  if (POS.z < (AB.z / 2.0) && POS.x < (AC.x / 2.0)) {
+	factx = POS.x;
+	factz = POS.z;
+  } else {
+	POS.x = x - D[0]; POS.y = D[1]; POS.z = z - D[2];
+	SetVector(B[0] - D[0], B[1] - D[1], B[2] - D[2], &AB);
+	SetVector(C[0] - D[0], C[1] - D[1], C[2] - D[2], &AC);
+	factx = -POS.x;
+	factz = -POS.z;
+  }
+  Ypos = POS.y + factx * AC.y + factz * AB.y;
   return Ypos;
 }
 
@@ -510,8 +531,8 @@ void display(void)
 
 	// Load groundsphere
 	glUseProgram(progsph);
-	gsphC.posx += t / 1000.0;
-	gsphC.posz += t / 1000.0;
+	gsphC.posx += t / 10000.0;
+	gsphC.posz += t / 10000.0;
 	sphMatrix[3] = gsphC.posx;
 	sphMatrix[11] = gsphC.posz;
 	sphMatrix[7] = getPosYOnMap(gsphC.posx, gsphC.posz, tm);
