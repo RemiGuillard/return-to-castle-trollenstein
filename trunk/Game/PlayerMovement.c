@@ -115,13 +115,13 @@ void moveThePlayer() {
     position[2] = 0;
   if (position[2] > map->height)
     position[2] = map->height;
-	if (map->map[(int)(position[2]+0.15)][(int)position[0]] == WALL ||
-		map->map[(int)(position[2]-0.15)][(int)(position[0])] == WALL) {
+	if (map->map[(int)(position[2]+0.1)][(int)position[0]] == WALL ||
+		map->map[(int)(position[2]-0.1)][(int)(position[0])] == WALL) {
 	  look[2] = oldDir[2];
 	  position[2] = oldPos[2];
 	}
-	if (map->map[(int)(position[2])][(int)(position[0]-0.15)] == WALL || 
-		map->map[(int)(position[2])][(int)(position[0]+0.15)] == WALL ) {
+	if (map->map[(int)(position[2])][(int)(position[0]-0.1)] == WALL || 
+		map->map[(int)(position[2])][(int)(position[0]+0.1)] == WALL ) {
 	  look[0] = oldDir[0];
 	  position[0] = oldPos[0];  
 	}

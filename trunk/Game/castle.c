@@ -152,7 +152,7 @@ void init(void)
   // Really simulates a warp (By example, moving with a rotation
   // depending of the time)...
   glUseProgram(program);
-  wall = LoadModelPlus("models/cube.obj", program, "inPos", "inNorm", "inTex");
+  wall = LoadModelPlus("models/cubeplus.obj", program, "inPos", "inNorm", "inTex");
 
   // SEND DATA TO SHADERS
   glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix);
