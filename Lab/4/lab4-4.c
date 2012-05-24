@@ -31,7 +31,7 @@ float angv;
 
 // Angle & pos matrix
 GLfloat position[] =	{ 0.0f, 2.0f, 0.0f };
-GLfloat look[] =	{ 10.0f, 2.0f, 10.0f };
+//GLfloat look[] =	{ 10.0f, 2.0f, 10.0f };
 
 // Are we flying or not ?!
 int flying = 0;
@@ -117,65 +117,87 @@ void rotationVectX(float angle, GLfloat *A, GLfloat *B) {
   yprim = AB.y * sin(getRad(angle)) + AB.z * cos(getRad(angle));
 
   B[1] = xprim + A[1];
-  B[2] = yprim + A[2];
+  //  B[2] = yprim + A[2];
 }
 
+void		getLookingPoint(GLfloat* pos, float horizontal, float vertical, GLfloat* look) {
+
+  look[0] = pos[0] + 1.0; look[1] = pos[1]; look[2] = pos[2];
+
+  //  printf("[DEBUG] "
+  rotationVectY(horizontal, pos, look);
+  //  rotationVectX(vertical, pos, look);
+  if (vertical < 0.0)
+	look[1] -= (vertical * vertical) / 1000.0;
+  else
+	look[1] += (vertical * vertical) / 1000.0;
+  printf("[DEBUG] - vertical = %f  Horizontal = %f\n", vertical, horizontal);  
+}
 
 void moveThePlayer() {
-
-  GLfloat orig[] = { position[0], position[1], position[2] };
-  GLfloat dir[] = { look[0], look[1], look[2] };
-
-  Point3D AB;
 
   if (keyIsDown(27))
     exit(EXIT_SUCCESS);
 
-  if (keyIsDown('w') || keyIsDown('z')) { //UP
+  if (keyIsDown('o')) { // Move player upward
+	position[1] += 0.2;
+  }
+  if (keyIsDown('l')) { // Move player downward
+	position[1] -= 0.2;
+  }
+
+  if (keyIsDown('a')) { // Move camera left
+    angh -= 5.0;
+    angh = fmodf(angh, 360.0);
+  }
+  if (keyIsDown('e')) { // Move camera right
+    angh += 5.0;
+    angh = fmodf(angh, 360.0);
+  }
+
+  if (keyIsDown('t')) { // Move camera left
+	if (angv < 90.0)
+	  angv += 5.0;
+  }
+  if (keyIsDown('g')) { // Move camera right
+    if (angv > -90.0)
+	  angv -= 5.0;
+  }
+  
+  GLfloat orig[] = { position[0], position[1], position[2] };
+  GLfloat look[] = { 0.0, 0.0, 0.0};
+  getLookingPoint(position, angh, angv, look);
+  GLfloat dir[] = {look[0], look[1], look[2]};
+  
+  Point3D AB;
+
+  if (keyIsDown('z')) { //UP
     SetVector(look[0] - position[0], look[1] - position[1], look[2] - position[2], &AB);
-    look[0] += 0.04 * AB.x;
-    look[2] += 0.04 * AB.z;
     position[0] += 0.04 * AB.x;
     position[2] += 0.04 * AB.z;
 	if (flying == 1) {
-	  look[1] += 0.04 * AB.y;
 	  position[1] += 0.04 * AB.y;
 	}
   }
   if (keyIsDown('s')) { //DOWN
     SetVector(look[0] - position[0], look[1] - position[1], look[2] - position[2], &AB);
-    look[0] -= 0.04 * AB.x;
-    look[2] -= 0.04 * AB.z;
     position[0] -= 0.04 * AB.x;
     position[2] -= 0.04 * AB.z;
 	if (flying == 1) {
-	  look[1] -= 0.04 * AB.y;
 	  position[1] -= 0.04 * AB.y;
 	}
   }
   if (keyIsDown('d')) { //RIGHT
     rotationVectY(90, orig, dir);
     SetVector(dir[0] - orig[0], dir[1] - orig[1], dir[2] - orig[2], &AB);
-    look[0] += 0.04 * AB.x;
-    look[2] += 0.04 * AB.z;
     position[0] += 0.04 * AB.x;
     position[2] += 0.04 * AB.z;
-	if (flying == 1) {
-	  look[1] += 0.04 * AB.y;
-	  position[1] += 0.04 * AB.y;
-	}
   }
-  if (keyIsDown('a') || keyIsDown('q')) { //LEFT
+  if (keyIsDown('q')) { //LEFT
     rotationVectY(90, orig, dir);
     SetVector(dir[0] - orig[0], dir[1] - orig[1], dir[2] - orig[2], &AB);
-    look[0] -= 0.04 * AB.x;
-    look[2] -= 0.04 * AB.z;
     position[0] -= 0.04 * AB.x;
     position[2] -= 0.04 * AB.z;
-	if (flying == 1) {
-	  look[1] -= 0.04 * AB.y;
-	  position[1] -= 0.04 * AB.y;
-	}
   }
 }
 
@@ -186,16 +208,11 @@ void mouseMove(int x, int y) {
 
   //Horizontal
   angleh = (float)factx * 360.0;
-  rotationVectY(angleh - angh, position, look);
   angh = angleh;
 
   //Vertical
   
   anglev = (float)facty * 179.0;
-  if (look[2] > position[2])
-	rotationVectX(-anglev + angv, position, look);
-  else
-	rotationVectX(anglev - angv, position, look);
   angv = anglev;
 
 }
@@ -221,7 +238,6 @@ void lookAt(GLfloat px, GLfloat py, GLfloat pz,
 	Normalize(&u);
 	
 	CrossProduct(&n, &u, &v); // orthogonal up vector
-//	Normalize(&v); // Should be unnecessary
 	
 	T(-px, -py, -pz, t);
 	
@@ -511,15 +527,16 @@ void display(void)
 	moveThePlayer();
 
 	IdentityMatrix(sphMatrix);
-	
-	
+		
 	printError("pre display");
 	
 	glUseProgram(program);
 
+	GLfloat lookPt[3];
+	getLookingPoint(position, angh, angv, lookPt);
 	// Build matrix
 	lookAt(position[0], position[1], position[2],
-		   look[0], look[1], look[2],
+		   lookPt[0], lookPt[1], lookPt[2],
 		   0, 1, 0,
 		   camMatrix);
 	IdentityMatrix(modelView);
